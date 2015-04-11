@@ -15,6 +15,8 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 trait UniqueJob extends BaseJob {
+  val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
+
   def extract(input: DStream[String]): DStream[EventForUnique] =
     input.flatMap(Parse.decodeOption[EventForUnique](_))
 
@@ -24,14 +26,14 @@ trait UniqueJob extends BaseJob {
     data.foreachRDD { rdd =>
       rdd.cache()
       val loaded: RDD[(DateTime, HLL)] =
-        rdd.joinWithCassandraTable[(DateTime, HLL)]("fast", "unique").map {
+        rdd.joinWithCassandraTable[(DateTime, HLL)]("fast", "unique").select(Columns: _*).map {
           case (_, (time, previous)) => (time, previous)
         }
       val output: RDD[(DateTime, HLL)] =
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) => (time, previous.fold(current)(_ + current))
         }
-      output.saveAsCassandraTable("fast", "unique")
+      output.saveAsCassandraTable("fast", "unique", SomeColumns(Columns: _*))
       rdd.unpersist(blocking = false)
     }
 
