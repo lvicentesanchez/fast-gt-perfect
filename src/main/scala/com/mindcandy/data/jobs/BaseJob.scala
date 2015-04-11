@@ -8,7 +8,7 @@ import org.joda.time.DateTime
 import scala.concurrent.duration.FiniteDuration
 
 trait BaseJob {
-  def convert: Seq[TypeConverter[_]]
+  def Converters: Seq[TypeConverter[_]]
 
   def produce(config: Config, streaming: StreamingContext): DStream[String]
 
@@ -19,5 +19,5 @@ trait BaseJob {
       (rounded, g(data))
     }
 
-  convert.foreach(TypeConverter.registerConverter)
+  Converters.foreach(TypeConverter.registerConverter)
 }

@@ -20,16 +20,15 @@ trait UniqueJob extends BaseJob {
   def Bucket: FiniteDuration
   def CF: String
   def Columns: Seq[SelectableColumnRef]
-  def KS: String
-  def Monoid: HyperLogLogMonoid
-
-  val convert: Seq[TypeConverter[_]] = Seq(
+  val Converters: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
     AnyToHyperLogLogConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
     HyperLogLogToArrayByteConverter
   )
+  def KS: String
+  def Monoid: HyperLogLogMonoid
 
   def extract(input: DStream[String]): DStream[EventForUnique] =
     input.flatMap(Parse.decodeOption[EventForUnique](_))
