@@ -7,7 +7,7 @@ import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.cassandra.reader._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.revenue.model.EventForRevenue
-import com.mindcandy.data.model.{ Amount, TxID, UserID }
+import com.mindcandy.data.model.{ Amount, TxID }
 import com.twitter.algebird._
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
@@ -23,10 +23,8 @@ trait RevenueJob extends BaseJob {
   def Columns: Seq[SelectableColumnRef]
   val Converters: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
-    AnyToHyperLogLogConverter,
     DateTimeToDateConverter,
-    DateTimeToLongConverter,
-    HyperLogLogToArrayByteConverter
+    DateTimeToLongConverter
   )
   def KS: String
   def Monoid: BloomFilterMonoid
