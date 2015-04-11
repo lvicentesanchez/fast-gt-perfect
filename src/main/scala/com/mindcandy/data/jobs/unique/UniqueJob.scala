@@ -17,7 +17,11 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 trait UniqueJob extends BaseJob {
-  val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
+  def Bucket: FiniteDuration
+  def CF: String
+  def Columns: Seq[SelectableColumnRef]
+  def KS: String
+  def Monoid: HyperLogLogMonoid
 
   val convert: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
@@ -30,29 +34,27 @@ trait UniqueJob extends BaseJob {
   def extract(input: DStream[String]): DStream[EventForUnique] =
     input.flatMap(Parse.decodeOption[EventForUnique](_))
 
-  def monoid: HyperLogLogMonoid
-
   def mergeAndStore(data: DStream[(DateTime, HLL)]): Unit =
     data.foreachRDD { rdd =>
       rdd.cache()
       val loaded: RDD[(DateTime, HLL)] =
-        rdd.joinWithCassandraTable[(DateTime, HLL)]("fast", "unique").select(Columns: _*).map {
+        rdd.joinWithCassandraTable[(DateTime, HLL)](KS, CF).select(Columns: _*).map {
           case (_, (time, previous)) => (time, previous)
         }
       val output: RDD[(DateTime, HLL)] =
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) => (time, previous.fold(current)(_ + current))
         }
-      output.saveAsCassandraTable("fast", "unique", SomeColumns(Columns: _*))
+      output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
       rdd.unpersist(blocking = false)
     }
 
   def process(data: DStream[String]): DStream[(DateTime, HLL)] = {
     val extracted: DStream[EventForUnique] = extract(data)
     val withBuckets: DStream[(DateTime, UserID)] =
-      buckets[EventForUnique, UserID](_.time, _.userID, 5.minutes)(extracted)
+      buckets[EventForUnique, UserID](_.time, _.userID, Bucket)(extracted)
     val reduced: DStream[(DateTime, HLL)] =
-      withBuckets.groupByKey().mapValues(monoid.batchCreate(_)(_.value.getBytes))
+      withBuckets.groupByKey().mapValues(Monoid.batchCreate(_)(_.value.getBytes))
     reduced
   }
 }
