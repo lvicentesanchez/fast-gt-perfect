@@ -34,6 +34,29 @@ trait RevenueJob extends BaseJob {
   def extract(input: DStream[String]): DStream[EventForRevenue] =
     input.flatMap(Parse.decodeOption[EventForRevenue](_))
 
+  def filter(bloom: BF, current: Iterable[(TxID, Amount)]): Iterable[(TxID, Amount)] =
+    current.filter {
+      case (TxID(txid), _) => !bloom.contains(txid).isTrue
+    }
+
+  def mergeBF(bloom: BF, current: Iterable[(TxID, Amount)]): BF =
+    current.foldLeft(bloom) {
+      case (acc, (TxID(txid), _)) => acc + txid
+    }
+
+  def mergeAmount(amount: Int, current: Iterable[(TxID, Amount)]): Int =
+    current.foldLeft(amount) {
+      case (acc, (_, Amount(value))) => acc + value
+    }
+
+  def filterAndMerge(current: Iterable[(TxID, Amount)], previous: Option[(BF, Int)]): (BF, Int) = {
+    val (bf, amount): (BF, Int) = previous.getOrElse((Monoid.zero, 0))
+    val filtered: Iterable[(TxID, Amount)] = filter(bf, current)
+    val updatedBF: BF = mergeBF(bf, filtered)
+    val updatedRV: Int = mergeAmount(amount, filtered)
+    (updatedBF, updatedRV)
+  }
+
   def mergeAndStore(data: DStream[(DateTime, Iterable[(TxID, Amount)])]): Unit =
     data.foreachRDD { rdd =>
       rdd.cache()
@@ -44,15 +67,7 @@ trait RevenueJob extends BaseJob {
       val output: RDD[(DateTime, BF, Int)] =
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) =>
-            val (bf, amount): (BF, Int) =
-              previous.getOrElse((Monoid.zero, 0))
-            val filtered: Iterable[(TxID, Amount)] =
-              current.filter { case (TxID(txid), _) => !bf.contains(txid).isTrue }
-            val updatedBF: BF =
-              filtered.foldLeft(bf) { case (acc, (TxID(txid), _)) => acc + txid }
-            val updatedRV: Int =
-              filtered.foldLeft(amount) { case (acc, (_, Amount(value))) => acc + value }
-
+            val (updatedBF, updatedRV): (BF, Int) = filterAndMerge(current, previous)
             (time, updatedBF, updatedRV)
         }
       output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
