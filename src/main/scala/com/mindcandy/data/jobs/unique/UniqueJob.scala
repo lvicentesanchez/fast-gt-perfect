@@ -2,6 +2,8 @@ package com.mindcandy.data.jobs.unique
 
 import argonaut._
 import com.datastax.spark.connector._
+import com.datastax.spark.connector.types.TypeConverter
+import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.unique.model.EventForUnique
 import com.mindcandy.data.model.UserID
@@ -16,6 +18,14 @@ import scala.concurrent.duration._
 
 trait UniqueJob extends BaseJob {
   val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
+
+  val convert: Seq[TypeConverter[_]] = Seq(
+    AnyToDateTimeConverter,
+    AnyToHyperLogLogConverter,
+    DateTimeToDateConverter,
+    DateTimeToLongConverter,
+    HyperLogLogToArrayByteConverter
+  )
 
   def extract(input: DStream[String]): DStream[EventForUnique] =
     input.flatMap(Parse.decodeOption[EventForUnique](_))
