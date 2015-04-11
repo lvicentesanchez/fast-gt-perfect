@@ -15,21 +15,12 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 trait UniqueJob extends BaseJob {
-  def monoid: HyperLogLogMonoid
-
   def extract(input: DStream[String]): DStream[EventForUnique] =
     input.flatMap(Parse.decodeOption[EventForUnique](_))
 
-  def process(data: DStream[String]): DStream[(DateTime, HLL)] = {
-    val extracted: DStream[EventForUnique] = extract(data)
-    val withBuckets: DStream[(DateTime, UserID)] =
-      buckets[EventForUnique, UserID](_.time, _.userID, 5.minutes)(extracted)
-    val reduced: DStream[(DateTime, HLL)] =
-      withBuckets.groupByKey().mapValues(monoid.batchCreate(_)(_.value.getBytes))
-    reduced
-  }
+  def monoid: HyperLogLogMonoid
 
-  def updateAndStore(data: DStream[(DateTime, HLL)]): Unit =
+  def mergeAndStore(data: DStream[(DateTime, HLL)]): Unit =
     data.foreachRDD { rdd =>
       rdd.cache()
       val loaded: RDD[(DateTime, HLL)] =
@@ -44,4 +35,12 @@ trait UniqueJob extends BaseJob {
       rdd.unpersist(blocking = false)
     }
 
+  def process(data: DStream[String]): DStream[(DateTime, HLL)] = {
+    val extracted: DStream[EventForUnique] = extract(data)
+    val withBuckets: DStream[(DateTime, UserID)] =
+      buckets[EventForUnique, UserID](_.time, _.userID, 5.minutes)(extracted)
+    val reduced: DStream[(DateTime, HLL)] =
+      withBuckets.groupByKey().mapValues(monoid.batchCreate(_)(_.value.getBytes))
+    reduced
+  }
 }

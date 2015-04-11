@@ -14,6 +14,6 @@ object UniqueJobLauncher extends UniqueJob with FileProducerBaseJob with Launche
   def run(config: Config, ssc: StreamingContext): Unit = {
     val events: DStream[String] = produce(config, ssc)
     val output: DStream[(DateTime, HLL)] = process(events)
-    updateAndStore(output)
+    mergeAndStore(output)
   }
 }
