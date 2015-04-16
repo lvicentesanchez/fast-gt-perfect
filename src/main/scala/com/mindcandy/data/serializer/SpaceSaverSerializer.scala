@@ -1,8 +1,8 @@
 package com.mindcandy.data.serializer
 
-import com.esotericsoftware.kryo.io.{Input, Output}
-import com.esotericsoftware.kryo.{Kryo, Serializer}
-import com.twitter.algebird._
+import com.esotericsoftware.kryo.io.{ Input, Output }
+import com.esotericsoftware.kryo.{ Kryo, Serializer }
+import com.twitter.algebird.{ SpaceSaver, SSMany, SSOne }
 import scala.collection.immutable.SortedMap
 
 class SpaceSaverSerializer[T] extends Serializer[SpaceSaver[T]] {
