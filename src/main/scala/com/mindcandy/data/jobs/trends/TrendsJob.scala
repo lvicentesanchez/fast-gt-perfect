@@ -23,10 +23,10 @@ trait TrendsJob extends BaseJob {
   def Columns: Seq[SelectableColumnRef]
   val Converters: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
-    AnyToSpaceSaverConverter,
+    AnyToSpaceSaverConverter(Cache),
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    new SpaceSaverToArrayByteConverter[String]()
+    SpaceSaverToArrayByteConverter(Cache)
   )
   def KS: String
 

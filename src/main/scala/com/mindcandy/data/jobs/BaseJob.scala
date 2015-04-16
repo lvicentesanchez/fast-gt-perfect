@@ -1,13 +1,17 @@
 package com.mindcandy.data.jobs
 
 import com.datastax.spark.connector.types.TypeConverter
+import com.mindcandy.data.kryo.KryoCache
 import com.typesafe.config.Config
+import org.apache.spark.SparkConf
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 import org.joda.time.DateTime
 import scala.concurrent.duration.FiniteDuration
 
 trait BaseJob {
+  val Cache: KryoCache = new KryoCache(new SparkConf())
+
   def Converters: Seq[TypeConverter[_]]
 
   def produce(config: Config, streaming: StreamingContext): DStream[String]

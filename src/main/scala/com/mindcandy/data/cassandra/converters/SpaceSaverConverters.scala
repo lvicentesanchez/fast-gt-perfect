@@ -1,27 +1,37 @@
 package com.mindcandy.data.cassandra.converters
 
 import com.datastax.spark.connector.types._
+import com.esotericsoftware.kryo.io.{ Output, Input }
+import com.mindcandy.data.kryo.KryoCache
 import com.twitter.algebird.SpaceSaver
-import com.twitter.algebird.extensions._
 import java.nio.ByteBuffer
-import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
-trait AnyToSpaceSaverConverter extends TypeConverter[SpaceSaver[String]] {
-  def targetTypeTag: TypeTag[SpaceSaver[String]] = typeTag[SpaceSaver[String]]
+class AnyToSpaceSaverConverter[T: TypeTag](cache: KryoCache) extends TypeConverter[SpaceSaver[T]] {
+  def targetTypeTag: TypeTag[SpaceSaver[T]] = typeTag[SpaceSaver[T]]
 
-  def convertPF: PartialFunction[Any, SpaceSaver[String]] = {
-    case bytes: Array[Byte] => SpaceSaver.fromBytes(bytes)
-    case bytes: ByteBuffer => SpaceSaver.fromByteBuffer(bytes)
+  def convertPF: PartialFunction[Any, SpaceSaver[T]] = {
+    case bytes: Array[Byte] => cache.withKryoInstance(_.readObject(new Input(bytes), classOf[SpaceSaver[T]]))
+    case bytes: ByteBuffer => cache.withKryoInstance(_.readObject(new Input(bytes.array()), classOf[SpaceSaver[T]]))
   }
 }
 
-object AnyToSpaceSaverConverter extends AnyToSpaceSaverConverter
+object AnyToSpaceSaverConverter {
+  def apply[T: TypeTag](cache: KryoCache): AnyToSpaceSaverConverter[T] = new AnyToSpaceSaverConverter[T](cache)
+}
 
-class SpaceSaverToArrayByteConverter[T: ClassTag] extends TypeConverter[Array[Byte]] {
+class SpaceSaverToArrayByteConverter(cache: KryoCache) extends TypeConverter[Array[Byte]] {
   def targetTypeTag: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
 
   def convertPF: PartialFunction[Any, Array[Byte]] = {
-    case source: SpaceSaver[T] => Array[Byte]()
+    case saver: SpaceSaver[_] =>
+      Array[Byte]()
+      val output: Output = new Output(32 * 1024)
+      cache.withKryoInstance(_.writeObject(output, saver))
+      output.toBytes
   }
+}
+
+object SpaceSaverToArrayByteConverter {
+  def apply(cache: KryoCache): SpaceSaverToArrayByteConverter = new SpaceSaverToArrayByteConverter(cache)
 }

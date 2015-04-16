@@ -36,4 +36,3 @@ trait DateTimeToDateConverter extends TypeConverter[Date] {
 }
 
 object DateTimeToDateConverter extends DateTimeToDateConverter
-

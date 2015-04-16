@@ -22,10 +22,10 @@ trait UniqueJob extends BaseJob {
   def Columns: Seq[SelectableColumnRef]
   val Converters: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
-    AnyToHyperLogLogConverter,
+    AnyToHyperLogLogConverter(Cache),
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    HyperLogLogToArrayByteConverter
+    HyperLogLogToArrayByteConverter(14, 1024, Cache)
   )
   def KS: String
   def Monoid: HyperLogLogMonoid

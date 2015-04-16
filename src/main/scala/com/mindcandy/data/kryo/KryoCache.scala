@@ -1,7 +1,7 @@
 package com.mindcandy.data.kryo
 
 import com.esotericsoftware.kryo.Kryo
-import com.esotericsoftware.kryo.pool.{KryoPool, KryoFactory}
+import com.esotericsoftware.kryo.pool.{ KryoPool, KryoFactory }
 import org.apache.spark.SparkConf
 import org.apache.spark.serializer.KryoSerializer
 
