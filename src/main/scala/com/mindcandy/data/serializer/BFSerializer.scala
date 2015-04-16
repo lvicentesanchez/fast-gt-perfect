@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.esotericsoftware.kryo.{ Kryo, Serializer }
 import com.googlecode.javaewah.{ EWAHCompressedBitmap => CBitSet }
 import com.twitter.algebird._
-
 import scala.collection.immutable.BitSet
 
 class BFSerializer extends Serializer[BF] {
