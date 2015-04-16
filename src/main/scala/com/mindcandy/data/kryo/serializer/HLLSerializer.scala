@@ -1,4 +1,4 @@
-package com.mindcandy.data.serializer
+package com.mindcandy.data.kryo.serializer
 
 import com.esotericsoftware.kryo.{ Kryo, Serializer }
 import com.esotericsoftware.kryo.io.{ Input, Output }
