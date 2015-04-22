@@ -19,3 +19,7 @@ class KryoCache(sparkConf: SparkConf) {
     output
   }
 }
+
+object KryoCache {
+  def apply(sparkConf: SparkConf): KryoCache = new KryoCache(sparkConf)
+}

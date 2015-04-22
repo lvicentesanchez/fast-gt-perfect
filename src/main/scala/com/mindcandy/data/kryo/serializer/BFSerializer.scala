@@ -10,7 +10,7 @@ class BFSerializer extends Serializer[BF] {
   setAcceptsNull(false)
   setImmutable(true)
 
-  override def write(kryo: Kryo, output: Output, value: BF): Unit =
+  def write(kryo: Kryo, output: Output, value: BF): Unit =
     value match {
       case BFZero(hashes, width) =>
         output.writeByte(BFSerializer.BFZero)
@@ -36,7 +36,7 @@ class BFSerializer extends Serializer[BF] {
         output.writeInt(width)
     }
 
-  override def read(kryo: Kryo, input: Input, clazz: Class[BF]): BF = {
+  def read(kryo: Kryo, input: Input, clazz: Class[BF]): BF = {
     input.readByte() match {
       case BFSerializer.BFZero =>
         BFZero(kryo.readObject(input, classOf[BFHash]), input.readInt())

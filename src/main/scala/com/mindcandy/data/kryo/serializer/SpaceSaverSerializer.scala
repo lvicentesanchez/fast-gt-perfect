@@ -12,12 +12,12 @@ class SpaceSaverSerializer[T] extends Serializer[SpaceSaver[T]] {
   type Buckets = SortedMap[Long, Set[T]]
   type Counters = Map[T, (Long, Long)]
 
-  override def write(kryo: Kryo, output: Output, value: SpaceSaver[T]): Unit =
+  def write(kryo: Kryo, output: Output, value: SpaceSaver[T]): Unit =
     value match {
       case SSOne(capacity, item) =>
         output.writeByte(SpaceSaverSerializer.SSOne)
         output.writeInt(capacity)
-        kryo.writeClassAndObject(output, value)
+        kryo.writeClassAndObject(output, item)
 
       case SSMany(capacity, counters, buckets) =>
         output.writeByte(SpaceSaverSerializer.SSMany)
@@ -26,7 +26,7 @@ class SpaceSaverSerializer[T] extends Serializer[SpaceSaver[T]] {
         kryo.writeObject(output, buckets)
     }
 
-  override def read(kryo: Kryo, input: Input, clazz: Class[SpaceSaver[T]]): SpaceSaver[T] = {
+  def read(kryo: Kryo, input: Input, clazz: Class[SpaceSaver[T]]): SpaceSaver[T] = {
     input.readByte() match {
       case SpaceSaverSerializer.SSOne =>
         SSOne(input.readInt(), kryo.readClassAndObject(input).asInstanceOf[T])
