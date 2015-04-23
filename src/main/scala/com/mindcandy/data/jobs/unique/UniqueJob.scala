@@ -25,7 +25,7 @@ trait UniqueJob extends BaseJob {
     AnyToHyperLogLogConverter(Cache),
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    HyperLogLogToArrayByteConverter(14, 1024, Cache)
+    HyperLogLogToArrayByteConverter(Cache)
   )
   def KS: String
   def Monoid: HyperLogLogMonoid

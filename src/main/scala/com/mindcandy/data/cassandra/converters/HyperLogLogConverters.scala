@@ -20,18 +20,18 @@ object AnyToHyperLogLogConverter {
   def apply(cache: KryoCache): AnyToHyperLogLogConverter = new AnyToHyperLogLogConverter(cache)
 }
 
-class HyperLogLogToArrayByteConverter(bits: Int, offset: Int, cache: KryoCache) extends TypeConverter[Array[Byte]] {
+class HyperLogLogToArrayByteConverter(cache: KryoCache) extends TypeConverter[Array[Byte]] {
   def targetTypeTag: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
 
   def convertPF: PartialFunction[Any, Array[Byte]] = {
     case counter: HLL =>
-      val output: Output = new Output((1 << bits) + 1024)
+      val output: Output = new Output(4096, -1)
       cache.withKryoInstance(_.writeObject(output, counter))
       output.toBytes
   }
 }
 
 object HyperLogLogToArrayByteConverter {
-  def apply(bits: Int, offset: Int, cache: KryoCache): HyperLogLogToArrayByteConverter =
-    new HyperLogLogToArrayByteConverter(bits, offset, cache)
+  def apply(cache: KryoCache): HyperLogLogToArrayByteConverter =
+    new HyperLogLogToArrayByteConverter(cache)
 }

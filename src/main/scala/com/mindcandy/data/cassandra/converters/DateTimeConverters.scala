@@ -1,8 +1,7 @@
 package com.mindcandy.data.cassandra.converters
 
-import java.util.Date
-
 import com.datastax.spark.connector.types._
+import java.util.Date
 import org.joda.time.DateTime
 import scala.reflect.runtime.universe._
 

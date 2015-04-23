@@ -4,7 +4,6 @@ import argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
-import com.mindcandy.data.cassandra.reader._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.revenue.model.EventForRevenue
 import com.mindcandy.data.model.{ Amount, TxID }
@@ -23,6 +22,8 @@ trait RevenueJob extends BaseJob {
   def Columns: Seq[SelectableColumnRef]
   val Converters: Seq[TypeConverter[_]] = Seq(
     AnyToDateTimeConverter,
+    AnyToBloomFilterConverter(Cache),
+    BloomFilterToArrayByteConverter(Cache),
     DateTimeToDateConverter,
     DateTimeToLongConverter
   )

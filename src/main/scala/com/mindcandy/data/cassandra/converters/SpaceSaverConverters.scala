@@ -25,8 +25,7 @@ class SpaceSaverToArrayByteConverter(cache: KryoCache) extends TypeConverter[Arr
 
   def convertPF: PartialFunction[Any, Array[Byte]] = {
     case saver: SpaceSaver[_] =>
-      Array[Byte]()
-      val output: Output = new Output(32 * 1024)
+      val output: Output = new Output(4096, -1)
       cache.withKryoInstance(_.writeObject(output, saver))
       output.toBytes
   }
