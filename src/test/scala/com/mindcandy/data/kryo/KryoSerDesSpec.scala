@@ -1,7 +1,5 @@
 package com.mindcandy.data.kryo
 
-import java.io.ByteArrayOutputStream
-
 import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.twitter.algebird._
 import org.scalacheck.Prop
@@ -58,11 +56,9 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
     val resul: HLL =
       cache.withKryoInstance(
         kryo => {
-          val buffer: ByteArrayOutputStream = new ByteArrayOutputStream()
-          val output: Output = new Output(buffer)
+          val output: Output = new Output(4096, -1)
           kryo.writeObject(output, hyper)
-          output.flush()
-          kryo.readObject(new Input(buffer.toByteArray), classOf[HLL])
+          kryo.readObject(new Input(output.toBytes), classOf[HLL])
         }
       )
 
@@ -74,11 +70,9 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
     val resul: BF =
       cache.withKryoInstance(
         kryo => {
-          val buffer: ByteArrayOutputStream = new ByteArrayOutputStream()
-          val output: Output = new Output(buffer)
+          val output: Output = new Output(4096, -1)
           kryo.writeObject(output, bloom)
-          output.flush()
-          kryo.readObject(new Input(buffer.toByteArray), classOf[BF])
+          kryo.readObject(new Input(output.toBytes), classOf[BF])
         }
       )
 
@@ -90,11 +84,9 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
     val resul: SpaceSaver[String] =
       cache.withKryoInstance(
         kryo => {
-          val buffer: ByteArrayOutputStream = new ByteArrayOutputStream()
-          val output: Output = new Output(buffer)
+          val output: Output = new Output(4096, -1)
           kryo.writeObject(output, saver)
-          output.flush()
-          kryo.readObject(new Input(buffer.toByteArray), classOf[SpaceSaver[String]])
+          kryo.readObject(new Input(output.toBytes), classOf[SpaceSaver[String]])
         }
       )
 
