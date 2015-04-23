@@ -1,10 +1,9 @@
 package com.mindcandy.data.kryo
 
-import java.util.Date
-
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
 import com.twitter.algebird._
+import java.util.Date
 import org.apache.spark.SparkConf
 import org.joda.time.DateTime
 import org.scalacheck.Gen._
