@@ -12,7 +12,7 @@ import org.specs2.specification.FixtureExample
 import org.specs2.time.NoTimeConversions
 import org.specs2.ScalaCheck
 
-class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with ScalaCheck with NoTimeConversions {
+class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversions {
 
   val hyperMonoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
   val bloomMonoid: BloomFilterMonoid = BloomFilter(10000, 0.001)
@@ -24,11 +24,7 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
       set("spark.kryo.registrator", "com.mindcandy.data.kryo.serializer.AlgebirdRegistrator").
       setAppName(this.getClass.getSimpleName)
 
-  def fixture[R: AsResult](f: KryoCache => R): Result = {
-    val cache: KryoCache = new KryoCache(sparkConf)
-    val resul: R = f(cache)
-    AsResult(resul)
-  }
+  val kryoCache: KryoCache = new KryoCache(sparkConf)
 
   def is = sequential ^
     s2"""
@@ -38,23 +34,23 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
       ser/des HLL
       -----------
 
-        It should ser/der a HLL using Kryo ${serdesHyperLogLog(_: KryoCache)}
+        It should ser/der a HLL using Kryo ${serdesHyperLogLog()}
 
       ser/des BF
       -----------
 
-        It should ser/der a BF using Kryo  ${serdesBloomFilter(_: KryoCache)}
+        It should ser/der a BF using Kryo  ${serdesBloomFilter()}
 
       ser/des SS
       -----------
 
-        It should ser/der a SS using Kryo  ${serdesSpaceSaver(_: KryoCache)}
+        It should ser/der a SS using Kryo  ${serdesSpaceSaver()}
     """
 
-  def serdesHyperLogLog(cache: KryoCache): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
+  def serdesHyperLogLog(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val hyper: HLL = hyperMonoid.batchCreate(users)(_.getBytes)
     val resul: HLL =
-      cache.withKryoInstance(
+      kryoCache.withKryoInstance(
         kryo => {
           val output: Output = new Output(4096, -1)
           kryo.writeObject(output, hyper)
@@ -65,10 +61,10 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
     resul must_== hyper
   }
 
-  def serdesBloomFilter(cache: KryoCache): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
+  def serdesBloomFilter(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val bloom: BF = bloomMonoid.create(users: _*)
     val resul: BF =
-      cache.withKryoInstance(
+      kryoCache.withKryoInstance(
         kryo => {
           val output: Output = new Output(4096, -1)
           kryo.writeObject(output, bloom)
@@ -79,10 +75,10 @@ class KryoSerDesSpec extends Specification with FixtureExample[KryoCache] with S
     resul must_== bloom
   }
 
-  def serdesSpaceSaver(cache: KryoCache): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
+  def serdesSpaceSaver(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val saver: SpaceSaver[String] = users.map(SpaceSaver(200, _)).reduce(_ ++ _)
     val resul: SpaceSaver[String] =
-      cache.withKryoInstance(
+      kryoCache.withKryoInstance(
         kryo => {
           val output: Output = new Output(4096, -1)
           kryo.writeObject(output, saver)
