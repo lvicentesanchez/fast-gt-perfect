@@ -23,14 +23,15 @@ trait TrendsJob { self: BaseJob =>
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
-  implicit val SpaceSaverConverter: TypeConverter[SpaceSaver[String]] = AnyToSpaceSaverConverter[String]()
+  implicit val SpaceSaverConverter: TypeConverter[SpaceSaver[String]] = AnyToSpaceSaverStringConverter
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
     DateTimeConverter,
     SpaceSaverConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    SpaceSaverToArrayByteConverter
+    SpaceSaverToArrayByteConverter,
+    SpaceSaverToByteBufferConverter
   )
   def KS: String
 
@@ -48,7 +49,7 @@ trait TrendsJob { self: BaseJob =>
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) => (time, previous.fold(current)(_ ++ current))
         }
-      output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
+      output.saveToCassandra(KS, CF, SomeColumns(Columns: _*))
       rdd.unpersist(blocking = false)
     }
 

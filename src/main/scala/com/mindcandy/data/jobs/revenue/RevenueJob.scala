@@ -1,6 +1,6 @@
 package com.mindcandy.data.jobs.revenue
 
-import argonaut._, Argonaut._
+import argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._

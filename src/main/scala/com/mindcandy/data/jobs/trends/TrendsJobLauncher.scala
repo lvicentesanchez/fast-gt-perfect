@@ -14,9 +14,9 @@ import scala.concurrent.duration._
 object TrendsJobLauncher extends TrendsJob with FolderProducerBaseJob with Launcher {
   val Bucket: FiniteDuration = 5.minutes
   val Capacity: Int = 400
-  val CF: String = "unique"
+  val CF: String = "trends"
   val Columns: Seq[SelectableColumnRef] = Seq("time", "tags")
-  val KS: String = "tags"
+  val KS: String = "fast"
 
   def run(config: Config, ssc: StreamingContext): Unit = {
     val events: DStream[String] = produce(config, ssc)

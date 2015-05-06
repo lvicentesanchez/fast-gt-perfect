@@ -6,18 +6,16 @@ import com.twitter.algebird.SpaceSaver
 import java.nio.ByteBuffer
 import scala.reflect.runtime.universe._
 
-class AnyToSpaceSaverConverter[T: TypeTag]() extends TypeConverter[SpaceSaver[T]] {
-  def targetTypeTag: TypeTag[SpaceSaver[T]] = typeTag[SpaceSaver[T]]
+trait AnyToSpaceSaverStringConverter extends TypeConverter[SpaceSaver[String]] {
+  def targetTypeTag: TypeTag[SpaceSaver[String]] = typeTag[SpaceSaver[String]]
 
-  def convertPF: PartialFunction[Any, SpaceSaver[T]] = {
-    case bytes: Array[Byte] => KryoCache.fromBytes[SpaceSaver[T]](bytes)
-    case bytes: ByteBuffer => KryoCache.fromBytes[SpaceSaver[T]](bytes.array())
+  def convertPF: PartialFunction[Any, SpaceSaver[String]] = {
+    case bytes: Array[Byte] => KryoCache.fromBytes[SpaceSaver[String]](bytes)
+    case bytes: ByteBuffer => KryoCache.fromBytes[SpaceSaver[String]](bytes.array())
   }
 }
 
-object AnyToSpaceSaverConverter extends AnyToSpaceSaverConverter {
-  def apply[T: TypeTag](): AnyToSpaceSaverConverter[T] = new AnyToSpaceSaverConverter[T]()
-}
+object AnyToSpaceSaverStringConverter extends AnyToSpaceSaverStringConverter
 
 trait SpaceSaverToArrayByteConverter extends TypeConverter[Array[Byte]] {
   def targetTypeTag: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
@@ -28,3 +26,14 @@ trait SpaceSaverToArrayByteConverter extends TypeConverter[Array[Byte]] {
 }
 
 object SpaceSaverToArrayByteConverter extends SpaceSaverToArrayByteConverter
+
+trait SpaceSaverToByteBufferConverter extends TypeConverter[ByteBuffer] {
+  def targetTypeTag: TypeTag[ByteBuffer] = typeTag[ByteBuffer]
+
+  def convertPF: PartialFunction[Any, ByteBuffer] = {
+    case saver: SpaceSaver[_] => ByteBuffer.wrap(KryoCache.toBytes(saver))
+  }
+}
+
+object SpaceSaverToByteBufferConverter extends SpaceSaverToByteBufferConverter
+
