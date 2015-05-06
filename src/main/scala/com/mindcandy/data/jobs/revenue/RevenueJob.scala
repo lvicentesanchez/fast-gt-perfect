@@ -1,12 +1,11 @@
 package com.mindcandy.data.jobs.revenue
 
-import argonaut._
+import argonaut._, Argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.revenue.model.EventForRevenue
-import com.mindcandy.data.kryo.KryoCache
 import com.mindcandy.data.model.{ Amount, TxID }
 import com.twitter.algebird._
 import org.apache.spark.SparkContext._
@@ -26,11 +25,12 @@ trait RevenueJob { self: BaseJob =>
   implicit val BloomFilterConverter: TypeConverter[BF] = AnyToBloomFilterConverter
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
-    AmountToIntConverter,
+    AmountToIntegerConverter,
     AnyToAmountConverter,
     DateTimeConverter,
     BloomFilterConverter,
     BloomFilterToArrayByteConverter,
+    BloomFilterToByteBufferConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter
   )
@@ -76,7 +76,7 @@ trait RevenueJob { self: BaseJob =>
             val (updatedBF, updatedRV): (BF, Amount) = filterAndMerge(current, previous)
             (time, updatedBF, updatedRV)
         }
-      output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
+      output.saveToCassandra(KS, CF, SomeColumns(Columns: _*))
       rdd.unpersist(blocking = false)
     }
 

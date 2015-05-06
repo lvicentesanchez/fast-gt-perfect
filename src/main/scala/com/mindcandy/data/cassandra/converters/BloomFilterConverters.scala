@@ -26,3 +26,13 @@ trait BloomFilterToArrayByteConverter extends TypeConverter[Array[Byte]] {
 }
 
 object BloomFilterToArrayByteConverter extends BloomFilterToArrayByteConverter
+
+trait BloomFilterToByteBufferConverter extends TypeConverter[ByteBuffer] {
+  def targetTypeTag: TypeTag[ByteBuffer] = typeTag[ByteBuffer]
+
+  def convertPF: PartialFunction[Any, ByteBuffer] = {
+    case bloom: BF => ByteBuffer.wrap(KryoCache.toBytes(bloom))
+  }
+}
+
+object BloomFilterToByteBufferConverter extends BloomFilterToByteBufferConverter

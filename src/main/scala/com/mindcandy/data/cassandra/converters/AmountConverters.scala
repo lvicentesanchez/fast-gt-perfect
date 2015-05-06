@@ -2,6 +2,7 @@ package com.mindcandy.data.cassandra.converters
 
 import com.datastax.spark.connector.types._
 import com.mindcandy.data.model.Amount
+import java.{ lang => jl }
 import scala.reflect.runtime.universe._
 
 trait AnyToAmountConverter extends TypeConverter[Amount] {
@@ -9,17 +10,18 @@ trait AnyToAmountConverter extends TypeConverter[Amount] {
 
   def convertPF: PartialFunction[Any, Amount] = {
     case int: Int => Amount(int)
+    case int: jl.Integer => Amount(int)
   }
 }
 
 object AnyToAmountConverter extends AnyToAmountConverter
 
-trait AmountToIntConverter extends TypeConverter[Int] {
-  def targetTypeTag: TypeTag[Int] = typeTag[Int]
+trait AmountToIntegerConverter extends TypeConverter[jl.Integer] {
+  def targetTypeTag: TypeTag[jl.Integer] = typeTag[jl.Integer]
 
-  def convertPF: PartialFunction[Any, Int] = {
+  def convertPF: PartialFunction[Any, jl.Integer] = {
     case amount: Amount => amount.value
   }
 }
 
-object AmountToIntConverter extends AmountToIntConverter
+object AmountToIntegerConverter extends AmountToIntegerConverter

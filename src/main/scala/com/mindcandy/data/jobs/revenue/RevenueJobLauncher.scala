@@ -15,10 +15,10 @@ import scala.concurrent.duration._
 object RevenueJobLauncher extends RevenueJob with FolderProducerBaseJob with Launcher {
   val Bucket: FiniteDuration = 5.minutes
   val Capacity: Int = 10000
-  val CF: String = "unique"
+  val CF: String = "revenue"
   val Columns: Seq[SelectableColumnRef] = Seq("time", "filter", "amount")
   val FalsePositive: Double = 0.01
-  val KS: String = "revenue"
+  val KS: String = "fast"
   val Monoid: BloomFilterMonoid = BloomFilter(Capacity, FalsePositive)
 
   def run(config: Config, ssc: StreamingContext): Unit = {

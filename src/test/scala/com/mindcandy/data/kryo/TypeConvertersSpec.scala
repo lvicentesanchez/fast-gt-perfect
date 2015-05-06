@@ -4,6 +4,7 @@ import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.model.Amount
 import com.twitter.algebird._
+import java.{ lang => jl }
 import java.util.Date
 import org.joda.time.DateTime
 import org.scalacheck.Gen
@@ -17,19 +18,19 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
 
   val bloomMonoid: BloomFilterMonoid = BloomFilter(10000, 0.001)
   val hyperMonoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
-  val kryoCache: KryoCache = KryoCache()
+  val kryoCache: KryoCache = KryoCache
 
   val converters: Seq[TypeConverter[_]] =
     Seq(
-      AmountToIntConverter,
+      AmountToIntegerConverter,
       AnyToAmountConverter,
-      AnyToBloomFilterConverter(kryoCache),
+      AnyToBloomFilterConverter,
       AnyToDateTimeConverter,
-      BloomFilterToArrayByteConverter(kryoCache),
-      AnyToHyperLogLogConverter(kryoCache),
+      BloomFilterToArrayByteConverter,
+      AnyToHyperLogLogConverter,
       DateTimeToDateConverter,
       DateTimeToLongConverter,
-      HyperLogLogToArrayByteConverter(kryoCache)
+      HyperLogLogToArrayByteConverter
     )
 
   converters.foreach(TypeConverter.registerConverter)
@@ -42,33 +43,33 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
       Amount Converters
       -----------------
 
-        It should convert an Amount to Int and back to Amount     ${amountToInt()}
+        It should convert an Amount to java.lang.Integer and back to Amount ${amountToInteger()}
 
       BloomFilter Converters
       ----------------------
 
-        It should convert a BF to Array[Byte] and back to BF      ${bloomToArrayByte()}
+        It should convert a BF to Array[Byte] and back to BF                ${bloomToArrayByte()}
 
       DateTime Converters
       ----------------------
 
-        It should convert a DateTime to Date and back to DateTime ${dateTimeToDate()}
-        It should convert a DateTime to Long and back to DateTime ${dateTimeToLong()}
+        It should convert a DateTime to Date and back to DateTime           ${dateTimeToDate()}
+        It should convert a DateTime to Long and back to DateTime           ${dateTimeToLong()}
 
       HyperLogLog Converters
       ----------------------
 
-        It should convert a HLL to Array[Byte] and back to HLL    ${hyperToArrayByte()}
+        It should convert a HLL to Array[Byte] and back to HLL              ${hyperToArrayByte()}
 
       SpaceSaver Converters
       ----------------------
 
-        It should convert a SS to Array[Byte] and back to SS      ${hyperToArrayByte()}
+        It should convert a SS to Array[Byte] and back to SS                ${hyperToArrayByte()}
     """
 
-  def amountToInt(): Prop = forAllNoShrink(Gen.oneOf(negNum[Int], posNum[Int])) { num =>
+  def amountToInteger(): Prop = forAllNoShrink(Gen.oneOf(negNum[Int], posNum[Int])) { num =>
     val amount: Amount = Amount(num)
-    val tempor: Int = TypeConverter.forType[Int].convert(amount)
+    val tempor: jl.Integer = TypeConverter.forType[jl.Integer].convert(amount)
     val result: Amount = TypeConverter.forType[Amount].convert(tempor)
 
     result must_== amount

@@ -16,7 +16,7 @@ class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversion
 
   val hyperMonoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
   val bloomMonoid: BloomFilterMonoid = BloomFilter(10000, 0.001)
-  val kryoCache: KryoCache = KryoCache()
+  val kryoCache: KryoCache = KryoCache
 
   def is = sequential ^
     s2"""
