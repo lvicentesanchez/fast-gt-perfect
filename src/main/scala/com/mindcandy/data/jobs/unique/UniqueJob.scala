@@ -7,7 +7,6 @@ import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.unique.model.EventForUnique
 import com.mindcandy.data.model.UserID
-import com.mindcandy.data.cassandra.reader._
 import com.twitter.algebird.{ HLL, HyperLogLogMonoid }
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
@@ -16,13 +15,18 @@ import org.apache.spark.streaming.dstream.DStream
 import org.joda.time.DateTime
 import scala.concurrent.duration._
 
-trait UniqueJob extends BaseJob {
+trait UniqueJob { self: BaseJob =>
   def Bucket: FiniteDuration
   def CF: String
   def Columns: Seq[SelectableColumnRef]
-  val Converters: Seq[TypeConverter[_]] = Seq(
-    AnyToDateTimeConverter,
-    AnyToHyperLogLogConverter(Cache),
+  // Needed TypeConverter to create an implicit RowReaderFactory
+  //
+  implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
+  implicit val HyperLogLogConverter: TypeConverter[HLL] = AnyToHyperLogLogConverter(Cache)
+  //
+  override val Converters: Seq[TypeConverter[_]] = Seq(
+    DateTimeConverter,
+    HyperLogLogConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
     HyperLogLogToArrayByteConverter(Cache)

@@ -4,7 +4,6 @@ import argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
-import com.mindcandy.data.cassandra.reader._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.trends.model.EventForTrends
 import com.mindcandy.data.model.Tag
@@ -16,14 +15,19 @@ import org.apache.spark.streaming.dstream.DStream
 import org.joda.time.DateTime
 import scala.concurrent.duration._
 
-trait TrendsJob extends BaseJob {
+trait TrendsJob { self: BaseJob =>
   def Bucket: FiniteDuration
   def Capacity: Int
   def CF: String
   def Columns: Seq[SelectableColumnRef]
-  val Converters: Seq[TypeConverter[_]] = Seq(
-    AnyToDateTimeConverter,
-    AnyToSpaceSaverConverter(Cache),
+  // Needed TypeConverter to create an implicit RowReaderFactory
+  //
+  implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
+  implicit val SpaceSaverConverter: TypeConverter[SpaceSaver[String]] = AnyToSpaceSaverConverter[String](Cache)
+  //
+  override val Converters: Seq[TypeConverter[_]] = Seq(
+    DateTimeConverter,
+    SpaceSaverConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
     SpaceSaverToArrayByteConverter(Cache)

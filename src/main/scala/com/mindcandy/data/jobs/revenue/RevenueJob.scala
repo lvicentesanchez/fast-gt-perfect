@@ -16,13 +16,18 @@ import org.joda.time.DateTime
 
 import scala.concurrent.duration._
 
-trait RevenueJob extends BaseJob {
+trait RevenueJob { self: BaseJob =>
   def Bucket: FiniteDuration
   def CF: String
   def Columns: Seq[SelectableColumnRef]
-  val Converters: Seq[TypeConverter[_]] = Seq(
-    AnyToDateTimeConverter,
-    AnyToBloomFilterConverter(Cache),
+  // Needed TypeConverter to create an implicit RowReaderFactory
+  //
+  implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
+  implicit val BloomFilterConverter: TypeConverter[BF] = AnyToBloomFilterConverter(Cache)
+  //
+  override val Converters: Seq[TypeConverter[_]] = Seq(
+    DateTimeConverter,
+    BloomFilterConverter,
     BloomFilterToArrayByteConverter(Cache),
     DateTimeToDateConverter,
     DateTimeToLongConverter

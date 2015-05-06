@@ -2,7 +2,7 @@ package com.mindcandy.data.jobs.revenue
 
 import com.datastax.spark.connector.SelectableColumnRef
 import com.mindcandy.data.Launcher
-import com.mindcandy.data.jobs.FileProducerBaseJob
+import com.mindcandy.data.jobs.FolderProducerBaseJob
 import com.mindcandy.data.model.{ Amount, TxID }
 import com.twitter.algebird.{ BloomFilter, BloomFilterMonoid }
 import com.typesafe.config.Config
@@ -12,7 +12,7 @@ import org.joda.time.DateTime
 
 import scala.concurrent.duration._
 
-object RevenueJobLauncher extends RevenueJob with FileProducerBaseJob with Launcher {
+object RevenueJobLauncher extends RevenueJob with FolderProducerBaseJob with Launcher {
   val Bucket: FiniteDuration = 5.minutes
   val Capacity: Int = 10000
   val CF: String = "unique"
