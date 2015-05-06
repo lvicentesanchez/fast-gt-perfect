@@ -20,12 +20,13 @@
 package com.esotericsoftware.kryo.pool;
 
 import com.esotericsoftware.kryo.Kryo;
+import java.io.Serializable;
 
 /**
  * Factory to create new configured instances of {@link Kryo}.
  * 
  * @author Martin Grotzke
  */
-public interface KryoFactory {
+public interface KryoFactory extends Serializable {
 	Kryo create();
 }

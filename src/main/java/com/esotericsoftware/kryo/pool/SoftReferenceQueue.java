@@ -19,12 +19,12 @@
 
 package com.esotericsoftware.kryo.pool;
 
+import com.esotericsoftware.kryo.Kryo;
+import java.io.Serializable;
 import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Queue;
-
-import com.esotericsoftware.kryo.Kryo;
 
 /**
  * Internally uses {@link SoftReference}s for queued Kryo instances,
@@ -34,7 +34,7 @@ import com.esotericsoftware.kryo.Kryo;
  *
  * @author Martin Grotzke
  */
-class SoftReferenceQueue implements Queue<Kryo> {
+class SoftReferenceQueue implements Queue<Kryo>, Serializable {
 	
 	private Queue<SoftReference<Kryo>> delegate;
 

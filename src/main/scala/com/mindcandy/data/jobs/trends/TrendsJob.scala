@@ -23,14 +23,14 @@ trait TrendsJob { self: BaseJob =>
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
-  implicit val SpaceSaverConverter: TypeConverter[SpaceSaver[String]] = AnyToSpaceSaverConverter[String](Cache)
+  implicit val SpaceSaverConverter: TypeConverter[SpaceSaver[String]] = AnyToSpaceSaverConverter[String]()
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
     DateTimeConverter,
     SpaceSaverConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    SpaceSaverToArrayByteConverter(Cache)
+    SpaceSaverToArrayByteConverter
   )
   def KS: String
 

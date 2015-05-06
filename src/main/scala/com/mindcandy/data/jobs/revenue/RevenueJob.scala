@@ -6,6 +6,7 @@ import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.revenue.model.EventForRevenue
+import com.mindcandy.data.kryo.KryoCache
 import com.mindcandy.data.model.{ Amount, TxID }
 import com.twitter.algebird._
 import org.apache.spark.SparkContext._
@@ -13,7 +14,6 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.StreamingContext._
 import org.apache.spark.streaming.dstream.DStream
 import org.joda.time.DateTime
-
 import scala.concurrent.duration._
 
 trait RevenueJob { self: BaseJob =>
@@ -23,14 +23,14 @@ trait RevenueJob { self: BaseJob =>
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
-  implicit val BloomFilterConverter: TypeConverter[BF] = AnyToBloomFilterConverter(Cache)
+  implicit val BloomFilterConverter: TypeConverter[BF] = AnyToBloomFilterConverter
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
     AmountToIntConverter,
     AnyToAmountConverter,
     DateTimeConverter,
     BloomFilterConverter,
-    BloomFilterToArrayByteConverter(Cache),
+    BloomFilterToArrayByteConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter
   )

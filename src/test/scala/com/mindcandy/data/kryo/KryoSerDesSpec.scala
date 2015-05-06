@@ -16,15 +16,7 @@ class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversion
 
   val hyperMonoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
   val bloomMonoid: BloomFilterMonoid = BloomFilter(10000, 0.001)
-
-  val sparkConf: SparkConf =
-    new SparkConf().
-      setMaster("local[4]").
-      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
-      set("spark.kryo.registrator", "com.mindcandy.data.kryo.serializer.AlgebirdRegistrator").
-      setAppName(this.getClass.getSimpleName)
-
-  val kryoCache: KryoCache = new KryoCache(sparkConf)
+  val kryoCache: KryoCache = KryoCache()
 
   def is = sequential ^
     s2"""
@@ -50,13 +42,7 @@ class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversion
   def serdesHyperLogLog(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val hyper: HLL = hyperMonoid.batchCreate(users)(_.getBytes)
     val resul: HLL =
-      kryoCache.withKryoInstance(
-        kryo => {
-          val output: Output = new Output(4096, -1)
-          kryo.writeObject(output, hyper)
-          kryo.readObject(new Input(output.toBytes), classOf[HLL])
-        }
-      )
+      kryoCache.fromBytes[HLL](kryoCache.toBytes(hyper))
 
     resul must_== hyper
   }
@@ -64,13 +50,7 @@ class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversion
   def serdesBloomFilter(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val bloom: BF = bloomMonoid.create(users: _*)
     val resul: BF =
-      kryoCache.withKryoInstance(
-        kryo => {
-          val output: Output = new Output(4096, -1)
-          kryo.writeObject(output, bloom)
-          kryo.readObject(new Input(output.toBytes), classOf[BF])
-        }
-      )
+      kryoCache.fromBytes[BF](kryoCache.toBytes(bloom))
 
     resul must_== bloom
   }
@@ -78,13 +58,7 @@ class KryoSerDesSpec extends Specification with ScalaCheck with NoTimeConversion
   def serdesSpaceSaver(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val saver: SpaceSaver[String] = users.map(SpaceSaver(200, _)).reduce(_ ++ _)
     val resul: SpaceSaver[String] =
-      kryoCache.withKryoInstance(
-        kryo => {
-          val output: Output = new Output(4096, -1)
-          kryo.writeObject(output, saver)
-          kryo.readObject(new Input(output.toBytes), classOf[SpaceSaver[String]])
-        }
-      )
+      kryoCache.fromBytes[SpaceSaver[String]](kryoCache.toBytes(saver))
 
     resul must_== saver
   }

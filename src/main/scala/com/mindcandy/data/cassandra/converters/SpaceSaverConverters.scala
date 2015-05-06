@@ -1,36 +1,30 @@
 package com.mindcandy.data.cassandra.converters
 
 import com.datastax.spark.connector.types._
-import com.esotericsoftware.kryo.io.{ Output, Input }
 import com.mindcandy.data.kryo.KryoCache
 import com.twitter.algebird.SpaceSaver
 import java.nio.ByteBuffer
 import scala.reflect.runtime.universe._
 
-class AnyToSpaceSaverConverter[T: TypeTag](cache: KryoCache) extends TypeConverter[SpaceSaver[T]] {
+class AnyToSpaceSaverConverter[T: TypeTag]() extends TypeConverter[SpaceSaver[T]] {
   def targetTypeTag: TypeTag[SpaceSaver[T]] = typeTag[SpaceSaver[T]]
 
   def convertPF: PartialFunction[Any, SpaceSaver[T]] = {
-    case bytes: Array[Byte] => cache.withKryoInstance(_.readObject(new Input(bytes), classOf[SpaceSaver[T]]))
-    case bytes: ByteBuffer => cache.withKryoInstance(_.readObject(new Input(bytes.array()), classOf[SpaceSaver[T]]))
+    case bytes: Array[Byte] => KryoCache.fromBytes[SpaceSaver[T]](bytes)
+    case bytes: ByteBuffer => KryoCache.fromBytes[SpaceSaver[T]](bytes.array())
   }
 }
 
-object AnyToSpaceSaverConverter {
-  def apply[T: TypeTag](cache: KryoCache): AnyToSpaceSaverConverter[T] = new AnyToSpaceSaverConverter[T](cache)
+object AnyToSpaceSaverConverter extends AnyToSpaceSaverConverter {
+  def apply[T: TypeTag](): AnyToSpaceSaverConverter[T] = new AnyToSpaceSaverConverter[T]()
 }
 
-class SpaceSaverToArrayByteConverter(cache: KryoCache) extends TypeConverter[Array[Byte]] {
+trait SpaceSaverToArrayByteConverter extends TypeConverter[Array[Byte]] {
   def targetTypeTag: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
 
   def convertPF: PartialFunction[Any, Array[Byte]] = {
-    case saver: SpaceSaver[_] =>
-      val output: Output = new Output(4096, -1)
-      cache.withKryoInstance(_.writeObject(output, saver))
-      output.toBytes
+    case saver: SpaceSaver[_] => KryoCache.toBytes(saver)
   }
 }
 
-object SpaceSaverToArrayByteConverter {
-  def apply(cache: KryoCache): SpaceSaverToArrayByteConverter = new SpaceSaverToArrayByteConverter(cache)
-}
+object SpaceSaverToArrayByteConverter extends SpaceSaverToArrayByteConverter

@@ -5,7 +5,6 @@ import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.model.Amount
 import com.twitter.algebird._
 import java.util.Date
-import org.apache.spark.SparkConf
 import org.joda.time.DateTime
 import org.scalacheck.Gen
 import org.scalacheck.Gen._
@@ -18,15 +17,7 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
 
   val bloomMonoid: BloomFilterMonoid = BloomFilter(10000, 0.001)
   val hyperMonoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
-
-  val sparkConf: SparkConf =
-    new SparkConf().
-      setMaster("local[4]").
-      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
-      set("spark.kryo.registrator", "com.mindcandy.data.kryo.serializer.AlgebirdRegistrator").
-      setAppName(this.getClass.getSimpleName)
-
-  val kryoCache: KryoCache = new KryoCache(sparkConf)
+  val kryoCache: KryoCache = KryoCache()
 
   val converters: Seq[TypeConverter[_]] =
     Seq(

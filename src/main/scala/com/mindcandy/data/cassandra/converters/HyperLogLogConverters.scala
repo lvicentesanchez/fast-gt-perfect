@@ -1,37 +1,38 @@
 package com.mindcandy.data.cassandra.converters
 
 import com.datastax.spark.connector.types._
-import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.mindcandy.data.kryo.KryoCache
 import com.twitter.algebird.HLL
 import java.nio.ByteBuffer
 import scala.reflect.runtime.universe._
 
-class AnyToHyperLogLogConverter(cache: KryoCache) extends TypeConverter[HLL] {
+trait AnyToHyperLogLogConverter extends TypeConverter[HLL] {
   def targetTypeTag: TypeTag[HLL] = typeTag[HLL]
 
   def convertPF: PartialFunction[Any, HLL] = {
-    case bytes: Array[Byte] => cache.withKryoInstance(_.readObject(new Input(bytes), classOf[HLL]))
-    case bytes: ByteBuffer => cache.withKryoInstance(_.readObject(new Input(bytes.array()), classOf[HLL]))
+    case bytes: Array[Byte] => KryoCache.fromBytes[HLL](bytes)
+    case bytes: ByteBuffer => KryoCache.fromBytes[HLL](bytes.array())
   }
 }
 
-object AnyToHyperLogLogConverter {
-  def apply(cache: KryoCache): AnyToHyperLogLogConverter = new AnyToHyperLogLogConverter(cache)
-}
+object AnyToHyperLogLogConverter extends AnyToHyperLogLogConverter
 
-class HyperLogLogToArrayByteConverter(cache: KryoCache) extends TypeConverter[Array[Byte]] {
+trait HyperLogLogToArrayByteConverter extends TypeConverter[Array[Byte]] {
   def targetTypeTag: TypeTag[Array[Byte]] = typeTag[Array[Byte]]
 
   def convertPF: PartialFunction[Any, Array[Byte]] = {
-    case counter: HLL =>
-      val output: Output = new Output(4096, -1)
-      cache.withKryoInstance(_.writeObject(output, counter))
-      output.toBytes
+    case counter: HLL => KryoCache.toBytes(counter)
   }
 }
 
-object HyperLogLogToArrayByteConverter {
-  def apply(cache: KryoCache): HyperLogLogToArrayByteConverter =
-    new HyperLogLogToArrayByteConverter(cache)
+object HyperLogLogToArrayByteConverter extends HyperLogLogToArrayByteConverter
+
+trait HyperLogLogToByteBufferConverter extends TypeConverter[ByteBuffer] {
+  def targetTypeTag: TypeTag[ByteBuffer] = typeTag[ByteBuffer]
+
+  def convertPF: PartialFunction[Any, ByteBuffer] = {
+    case counter: HLL => ByteBuffer.wrap(KryoCache.toBytes(counter))
+  }
 }
+
+object HyperLogLogToByteBufferConverter extends HyperLogLogToByteBufferConverter

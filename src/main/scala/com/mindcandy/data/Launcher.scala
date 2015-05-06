@@ -5,7 +5,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import net.ceedubs.ficus.Ficus._
 import org.apache.spark.streaming.{ Seconds, StreamingContext }
 
-trait Launcher {
+trait Launcher extends Serializable {
   def TimeOut: Long = 10000
 
   def run(config: Config, ssc: StreamingContext): Unit
@@ -18,9 +18,10 @@ trait Launcher {
       val streaming: StreamingContext = new StreamingContext(spkConfig.sparkConf, Seconds(spkConfig.batch.toSeconds))
 
       run(appConfig, streaming)
+      streaming.start()
       Console.in.readLine()
       streaming.stop()
-      streaming.awaitTermination(TimeOut)
+      streaming.awaitTermination()
     }
   }
 }

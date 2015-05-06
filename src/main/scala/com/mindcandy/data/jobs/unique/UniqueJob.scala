@@ -3,6 +3,7 @@ package com.mindcandy.data.jobs.unique
 import argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
+import com.esotericsoftware.kryo.io.Output
 import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.unique.model.EventForUnique
@@ -22,14 +23,15 @@ trait UniqueJob { self: BaseJob =>
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
-  implicit val HyperLogLogConverter: TypeConverter[HLL] = AnyToHyperLogLogConverter(Cache)
+  implicit val HyperLogLogConverter: TypeConverter[HLL] = AnyToHyperLogLogConverter
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
     DateTimeConverter,
     HyperLogLogConverter,
     DateTimeToDateConverter,
     DateTimeToLongConverter,
-    HyperLogLogToArrayByteConverter(Cache)
+    HyperLogLogToArrayByteConverter,
+    HyperLogLogToByteBufferConverter
   )
   def KS: String
   def Monoid: HyperLogLogMonoid
@@ -48,7 +50,8 @@ trait UniqueJob { self: BaseJob =>
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) => (time, previous.fold(current)(_ + current))
         }
-      output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
+      output.saveToCassandra(KS, CF, SomeColumns(Columns: _*))
+
       rdd.unpersist(blocking = false)
     }
 

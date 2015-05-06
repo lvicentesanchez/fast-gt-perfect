@@ -19,12 +19,11 @@
 
 package com.esotericsoftware.kryo.pool;
 
+import com.esotericsoftware.kryo.Kryo;
+import java.io.Serializable;
 import java.lang.ref.SoftReference;
 import java.util.Queue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import com.esotericsoftware.kryo.Kryo;
 
 /**
  * A simple pool interface for {@link Kryo} instances. Use the {@link KryoPool.Builder} to
@@ -59,7 +58,7 @@ import com.esotericsoftware.kryo.Kryo;
  * 
  * @author Martin Grotzke
  */
-public interface KryoPool {
+public interface KryoPool extends Serializable {
 
 	/**
 	 * Takes a {@link Kryo} instance from the pool or creates a new one

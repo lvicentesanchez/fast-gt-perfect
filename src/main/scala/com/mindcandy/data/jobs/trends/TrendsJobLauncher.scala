@@ -3,6 +3,7 @@ package com.mindcandy.data.jobs.trends
 import com.datastax.spark.connector.SelectableColumnRef
 import com.mindcandy.data.Launcher
 import com.mindcandy.data.jobs.FolderProducerBaseJob
+import com.mindcandy.data.kryo.KryoCache
 import com.twitter.algebird.SpaceSaver
 import com.typesafe.config.Config
 import org.apache.spark.streaming.StreamingContext
