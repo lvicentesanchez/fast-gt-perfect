@@ -15,19 +15,18 @@ resolvers ++= Seq(
 // Dependencies
 
 val testDependencies = Seq(
-  "org.specs2"             %% "specs2"                    % "2.4.16" % "test,it"
+  "org.specs2"             %% "specs2"                    % "2.4.17" % "test"
 )
 
 val rootDependencies = Seq(
   "joda-time"              %  "joda-time"                 % "2.7",
   "log4j"                  %  "apache-log4j-extras"       % "1.2.17",
-  "com.datastax.spark"     %% "spark-cassandra-connector" % "1.2.0-rc3" exclude("org.apache.spark", "spark-core_2.10") exclude("org.apache.spark", "spark-streaming_2.10"),
+  "com.datastax.spark"     %% "spark-cassandra-connector" % "1.2.0",
   "com.twitter"            %% "algebird-core"             % "0.9.0",
-  "io.argonaut"            %% "argonaut"                  % "6.1-M6",
+  "io.argonaut"            %% "argonaut"                  % "6.1",
   "net.ceedubs"            %% "ficus"                     % "1.0.1",
-  "org.apache.spark"       %% "spark-core"                % "1.2.1" % "provided",
-  "org.apache.spark"       %% "spark-streaming"           % "1.2.1" % "provided",
-  "org.apache.spark"       %% "spark-streaming-kafka"     % "1.2.1" exclude("org.apache.spark", "spark-core_2.10") exclude("org.apache.spark", "spark-streaming_2.10"),
+  "org.apache.spark"       %% "spark-core"                % "1.2.1",
+  "org.apache.spark"       %% "spark-streaming"           % "1.2.1",
   "org.joda"               %  "joda-convert"              % "1.7"
 )
 
@@ -115,17 +114,10 @@ val settings = Seq(
   fork in testOnly := true,
   connectInput in run := true,
   javaOptions in run ++= forkedJvmOption,
-  javaOptions in IntegrationTest ++= forkedJvmOption,
   javaOptions in Test ++= forkedJvmOption,
   // formatting
   //
-  ScalariformKeys.preferences := formatting,
-  // trick that makes provided dependencies work when running
-  //
-  run in Compile <<= Defaults.runTask(fullClasspath in Compile, mainClass in (Compile, run), runner in (Compile, run)),
-  // it
-  unmanagedSourceDirectories in IntegrationTest <++= { baseDirectory { base => { Seq( base / "src/test/scala" )}}}
-)
+  ScalariformKeys.preferences := formatting)
 
 lazy val main =
   project
