@@ -2,10 +2,12 @@ package com.mindcandy.data.kryo
 
 import com.datastax.spark.connector.types.TypeConverter
 import com.mindcandy.data.cassandra.converters._
+import com.mindcandy.data.model.Amount
 import com.twitter.algebird._
 import java.util.Date
 import org.apache.spark.SparkConf
 import org.joda.time.DateTime
+import org.scalacheck.Gen
 import org.scalacheck.Gen._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -28,6 +30,8 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
 
   val converters: Seq[TypeConverter[_]] =
     Seq(
+      AmountToIntConverter,
+      AnyToAmountConverter,
       AnyToBloomFilterConverter(kryoCache),
       AnyToDateTimeConverter,
       BloomFilterToArrayByteConverter(kryoCache),
@@ -43,6 +47,11 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
     s2"""
     TypeConvertersSpec
     ==================
+
+      Amount Converters
+      -----------------
+
+        It should convert an Amount to Int and back to Amount     ${amountToInt()}
 
       BloomFilter Converters
       ----------------------
@@ -65,6 +74,14 @@ class TypeConvertersSpec extends Specification with ScalaCheck with NoTimeConver
 
         It should convert a SS to Array[Byte] and back to SS      ${hyperToArrayByte()}
     """
+
+  def amountToInt(): Prop = forAllNoShrink(Gen.oneOf(negNum[Int], posNum[Int])) { num =>
+    val amount: Amount = Amount(num)
+    val tempor: Int = TypeConverter.forType[Int].convert(amount)
+    val result: Amount = TypeConverter.forType[Amount].convert(tempor)
+
+    result must_== amount
+  }
 
   def bloomToArrayByte(): Prop = forAllNoShrink(nonEmptyListOf(uuid.map(_.toString))) { users =>
     val bloom: BF = bloomMonoid.create(users: _*)

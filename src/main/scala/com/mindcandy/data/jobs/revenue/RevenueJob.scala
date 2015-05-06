@@ -26,6 +26,8 @@ trait RevenueJob { self: BaseJob =>
   implicit val BloomFilterConverter: TypeConverter[BF] = AnyToBloomFilterConverter(Cache)
   //
   override val Converters: Seq[TypeConverter[_]] = Seq(
+    AmountToIntConverter,
+    AnyToAmountConverter,
     DateTimeConverter,
     BloomFilterConverter,
     BloomFilterToArrayByteConverter(Cache),
@@ -48,30 +50,30 @@ trait RevenueJob { self: BaseJob =>
       case (acc, (TxID(txid), _)) => acc + txid
     }
 
-  def mergeAmount(amount: Int, current: Iterable[(TxID, Amount)]): Int =
+  def mergeAmount(amount: Amount, current: Iterable[(TxID, Amount)]): Amount =
     current.foldLeft(amount) {
-      case (acc, (_, Amount(value))) => acc + value
+      case (Amount(acc), (_, Amount(value))) => Amount(acc + value)
     }
 
-  def filterAndMerge(current: Iterable[(TxID, Amount)], previous: Option[(BF, Int)]): (BF, Int) = {
-    val (bf, amount): (BF, Int) = previous.getOrElse((Monoid.zero, 0))
+  def filterAndMerge(current: Iterable[(TxID, Amount)], previous: Option[(BF, Amount)]): (BF, Amount) = {
+    val (bf, amount): (BF, Amount) = previous.getOrElse((Monoid.zero, Amount(0)))
     val filtered: Iterable[(TxID, Amount)] = filter(bf, current)
     val updatedBF: BF = mergeBF(bf, filtered)
-    val updatedRV: Int = mergeAmount(amount, filtered)
+    val updatedRV: Amount = mergeAmount(amount, filtered)
     (updatedBF, updatedRV)
   }
 
   def mergeAndStore(data: DStream[(DateTime, Iterable[(TxID, Amount)])]): Unit =
     data.foreachRDD { rdd =>
       rdd.cache()
-      val loaded: RDD[(DateTime, (BF, Int))] =
-        rdd.joinWithCassandraTable[(DateTime, BF, Int)](KS, CF).select(Columns: _*).map {
+      val loaded: RDD[(DateTime, (BF, Amount))] =
+        rdd.joinWithCassandraTable[(DateTime, BF, Amount)](KS, CF).select(Columns: _*).map {
           case (_, (time, bf, amount)) => (time, (bf, amount))
         }
-      val output: RDD[(DateTime, BF, Int)] =
+      val output: RDD[(DateTime, BF, Amount)] =
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) =>
-            val (updatedBF, updatedRV): (BF, Int) = filterAndMerge(current, previous)
+            val (updatedBF, updatedRV): (BF, Amount) = filterAndMerge(current, previous)
             (time, updatedBF, updatedRV)
         }
       output.saveAsCassandraTable(KS, CF, SomeColumns(Columns: _*))
