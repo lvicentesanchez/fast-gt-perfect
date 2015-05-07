@@ -6,8 +6,6 @@ import net.ceedubs.ficus.Ficus._
 import org.apache.spark.streaming.{ Seconds, StreamingContext }
 
 trait Launcher extends Serializable {
-  def TimeOut: Long = 10000
-
   def run(config: Config, ssc: StreamingContext): Unit
 
   def main(args: Array[String]): Unit = {
