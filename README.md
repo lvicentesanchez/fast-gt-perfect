@@ -4,7 +4,7 @@
 
 First you need to start cassandra locally and create both the keyspace and the column families using `src/main/cql/01_key_space.cql` and `src/main/cql/02_column_family.cql`.
 
-Then you need the folder `data` somewhere in your filesystem, i.e. your home folder. Inside the `data` you should create three folders named `revenue`, `trends` and `unique`.
+Then you need to create the folder `data` somewhere in your filesystem, i.e. your home folder. Inside the `data` you should create three folders named `revenue`, `trends` and `unique`.
 
 Modify the config files `src/main/resources/revenue.conf`, `src/main/resources/trends.conf` and `src/main/resources/unique.conf` to replace `<path>` in the property `producer.folder` with the path to your data folder.
 
