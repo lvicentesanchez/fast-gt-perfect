@@ -1,5 +1,11 @@
 # fast-gt-perfect
 
+> ### Warning
+>
+> Kryo serialization should not be used for long term storage as upgrading the library could end in binary representation
+> incompatibilities.
+>
+
 ### Pre-steps
 
 First you need to start cassandra locally and create both the keyspace and the column families using `src/main/cql/01_key_space.cql` and `src/main/cql/02_column_family.cql`.
