@@ -1,7 +1,6 @@
 package com.mindcandy.data.jobs.unique.model
 
-import argonaut.Argonaut._
-import argonaut._
+import argonaut._, Argonaut._
 import com.mindcandy.data.codecs.datetime.iso._
 import com.mindcandy.data.model.UserID
 import org.joda.time.DateTime

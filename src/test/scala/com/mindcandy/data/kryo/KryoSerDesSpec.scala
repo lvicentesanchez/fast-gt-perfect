@@ -1,14 +1,10 @@
 package com.mindcandy.data.kryo
 
-import com.esotericsoftware.kryo.io.{ Input, Output }
 import com.twitter.algebird._
 import org.scalacheck.Prop
 import org.scalacheck.Gen._
 import org.scalacheck.Prop._
-import org.apache.spark.SparkConf
 import org.specs2.Specification
-import org.specs2.execute.{ AsResult, Result }
-import org.specs2.specification.FixtureExample
 import org.specs2.time.NoTimeConversions
 import org.specs2.ScalaCheck
 

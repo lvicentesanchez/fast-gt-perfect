@@ -1,7 +1,6 @@
 package com.mindcandy.data.jobs
 
 import com.datastax.spark.connector.types.TypeConverter
-import com.mindcandy.data.kryo.KryoCache
 import com.typesafe.config.Config
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream

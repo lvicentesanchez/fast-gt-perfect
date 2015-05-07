@@ -3,7 +3,6 @@ package com.mindcandy.data.jobs.unique
 import com.datastax.spark.connector.SelectableColumnRef
 import com.mindcandy.data.Launcher
 import com.mindcandy.data.jobs.FolderProducerBaseJob
-import com.mindcandy.data.kryo.KryoCache
 import com.twitter.algebird.{ HLL, HyperLogLogMonoid }
 import com.typesafe.config.Config
 import org.apache.spark.streaming.StreamingContext

@@ -3,7 +3,6 @@ package com.mindcandy.data.jobs.unique
 import argonaut._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.types.TypeConverter
-import com.esotericsoftware.kryo.io.Output
 import com.mindcandy.data.cassandra.converters._
 import com.mindcandy.data.jobs.BaseJob
 import com.mindcandy.data.jobs.unique.model.EventForUnique

@@ -36,4 +36,3 @@ trait SpaceSaverToByteBufferConverter extends TypeConverter[ByteBuffer] {
 }
 
 object SpaceSaverToByteBufferConverter extends SpaceSaverToByteBufferConverter
-
