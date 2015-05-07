@@ -36,4 +36,4 @@ To run the trending job, load sbt and execute the command:
 
 In a different shell, copy the file `<repo>/fast-gt-perfect/data/trends/data.json` to the `trends` folder inside your `data` folder; Spark should detect the file and process it.
 
-You can stop the Spark job by pressing the RETURN key.
+You can stop the Spark job by pressing the RETURN key at any moment.
