@@ -11,13 +11,13 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 object UniqueJobLauncher extends UniqueJob with FolderProducerBaseJob with Launcher {
-  val Bucket: FiniteDuration = 5.minutes
-  val CF: String = "unique"
-  val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
-  val KS: String = "fast"
-  val Monoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
+  override val Bucket: FiniteDuration = 5.minutes
+  override val CF: String = "unique"
+  override val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
+  override val KS: String = "fast"
+  override val Monoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
 
-  def run(config: Config, ssc: StreamingContext): Unit = {
+  override def run(config: Config, ssc: StreamingContext): Unit = {
     val events: DStream[String] = produce(config, ssc)
     val output: DStream[(DateTime, HLL)] = process(events)
     mergeAndStore(output)

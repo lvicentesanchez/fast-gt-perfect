@@ -7,7 +7,7 @@ import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.dstream.DStream
 
 trait FolderProducerBaseJob extends BaseJob {
-  def produce(config: Config, streaming: StreamingContext): DStream[String] =
+  override def produce(config: Config, streaming: StreamingContext): DStream[String] =
     streaming.textFileStream(
       config.as[FolderProducerConfig]("producer").folder
     )

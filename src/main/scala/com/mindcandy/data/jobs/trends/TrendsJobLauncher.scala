@@ -11,13 +11,13 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 object TrendsJobLauncher extends TrendsJob with FolderProducerBaseJob with Launcher {
-  val Bucket: FiniteDuration = 5.minutes
-  val Capacity: Int = 400
-  val CF: String = "trends"
-  val Columns: Seq[SelectableColumnRef] = Seq("time", "tags")
-  val KS: String = "fast"
+  override val Bucket: FiniteDuration = 5.minutes
+  override val Capacity: Int = 400
+  override val CF: String = "trends"
+  override val Columns: Seq[SelectableColumnRef] = Seq("time", "tags")
+  override val KS: String = "fast"
 
-  def run(config: Config, ssc: StreamingContext): Unit = {
+  override def run(config: Config, ssc: StreamingContext): Unit = {
     val events: DStream[String] = produce(config, ssc)
     val output: DStream[(DateTime, SpaceSaver[String])] = process(events)
     mergeAndStore(output)

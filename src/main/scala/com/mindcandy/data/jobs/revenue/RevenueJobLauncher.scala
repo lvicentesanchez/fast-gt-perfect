@@ -13,15 +13,15 @@ import org.joda.time.DateTime
 import scala.concurrent.duration._
 
 object RevenueJobLauncher extends RevenueJob with FolderProducerBaseJob with Launcher {
-  val Bucket: FiniteDuration = 5.minutes
+  override val Bucket: FiniteDuration = 5.minutes
   val Capacity: Int = 10000
-  val CF: String = "revenue"
-  val Columns: Seq[SelectableColumnRef] = Seq("time", "filter", "amount")
+  override val CF: String = "revenue"
+  override val Columns: Seq[SelectableColumnRef] = Seq("time", "filter", "amount")
   val FalsePositive: Double = 0.01
-  val KS: String = "fast"
-  val Monoid: BloomFilterMonoid = BloomFilter(Capacity, FalsePositive)
+  override val KS: String = "fast"
+  override val Monoid: BloomFilterMonoid = BloomFilter(Capacity, FalsePositive)
 
-  def run(config: Config, ssc: StreamingContext): Unit = {
+  override def run(config: Config, ssc: StreamingContext): Unit = {
     val events: DStream[String] = produce(config, ssc)
     val output: DStream[(DateTime, Iterable[(TxID, Amount)])] = process(events)
     mergeAndStore(output)
