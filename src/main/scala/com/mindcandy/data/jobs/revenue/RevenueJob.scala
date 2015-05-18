@@ -17,8 +17,8 @@ import scala.concurrent.duration._
 
 trait RevenueJob { self: BaseJob =>
   def Bucket: FiniteDuration
-  def CF: String
-  def Columns: Seq[SelectableColumnRef]
+  def KS: String
+  def ColumnFamily: String
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
@@ -34,50 +34,39 @@ trait RevenueJob { self: BaseJob =>
     DateTimeToDateConverter,
     DateTimeToLongConverter
   )
-  def KS: String
   def Monoid: BloomFilterMonoid
 
   def extract(input: DStream[String]): DStream[EventForRevenue] =
     input.flatMap(Parse.decodeOption[EventForRevenue](_))
 
-  def filter(bloom: BF, current: Iterable[(TxID, Amount)]): Iterable[(TxID, Amount)] =
-    current.filter {
-      case (TxID(txid), _) => !bloom.contains(txid).isTrue
+  def filterAndMerge(current: Iterable[(TxID, Amount)], previous: Option[(BF, Amount)]) = {
+    val (bloomFilter, revenue): (BF, Amount) = previous.getOrElse((Monoid.zero, Amount(0)))
+    val filtered: Iterable[(TxID, Amount)] = current.filter {
+      case (TxID(txid), _) => !bloomFilter.contains(txid).isTrue
     }
-
-  def mergeBF(bloom: BF, current: Iterable[(TxID, Amount)]): BF =
-    current.foldLeft(bloom) {
+    val updatedBloomFilter: BF = filtered.foldLeft(bloomFilter) {
       case (acc, (TxID(txid), _)) => acc + txid
     }
-
-  def mergeAmount(amount: Amount, current: Iterable[(TxID, Amount)]): Amount =
-    current.foldLeft(amount) {
+    val updatedRevenue: Amount = filtered.foldLeft(revenue) {
       case (Amount(acc), (_, Amount(value))) => Amount(acc + value)
     }
-
-  def filterAndMerge(current: Iterable[(TxID, Amount)], previous: Option[(BF, Amount)]): (BF, Amount) = {
-    val (bf, amount): (BF, Amount) = previous.getOrElse((Monoid.zero, Amount(0)))
-    val filtered: Iterable[(TxID, Amount)] = filter(bf, current)
-    val updatedBF: BF = mergeBF(bf, filtered)
-    val updatedRV: Amount = mergeAmount(amount, filtered)
-    (updatedBF, updatedRV)
+    (updatedBloomFilter, updatedRevenue)
   }
 
   def mergeAndStore(data: DStream[(DateTime, Iterable[(TxID, Amount)])]): Unit =
     data.foreachRDD { rdd =>
-      rdd.cache()
       val loaded: RDD[(DateTime, (BF, Amount))] =
-        rdd.joinWithCassandraTable[(DateTime, BF, Amount)](KS, CF).select(Columns: _*).map {
-          case (_, (time, bf, amount)) => (time, (bf, amount))
-        }
+        rdd.joinWithCassandraTable[(DateTime, BF, Amount)](KS, ColumnFamily)
+          .select("time", "bf", "amount").map {
+            case (_, (time, bf, amount)) => (time, (bf, amount))
+          }
       val output: RDD[(DateTime, BF, Amount)] =
         rdd.leftOuterJoin(loaded).map {
           case (time, (current, previous)) =>
-            val (updatedBF, updatedRV): (BF, Amount) = filterAndMerge(current, previous)
-            (time, updatedBF, updatedRV)
+            val (bloomFilter, revenue): (BF, Amount) = filterAndMerge(current, previous)
+            (time, bloomFilter, revenue)
         }
-      output.saveToCassandra(KS, CF, SomeColumns(Columns: _*))
-      rdd.unpersist(blocking = false)
+      output.saveToCassandra(KS, ColumnFamily, SomeColumns("time", "bf", "amount"))
     }
 
   def process(data: DStream[String]): DStream[(DateTime, Iterable[(TxID, Amount)])] = {

@@ -17,8 +17,8 @@ import scala.concurrent.duration._
 
 trait UniqueJob { self: BaseJob =>
   def Bucket: FiniteDuration
-  def CF: String
-  def Columns: Seq[SelectableColumnRef]
+  def KS: String
+  def ColumnFamily: String
   // Needed TypeConverter to create an implicit RowReaderFactory
   //
   implicit val DateTimeConverter: TypeConverter[DateTime] = AnyToDateTimeConverter
@@ -32,7 +32,6 @@ trait UniqueJob { self: BaseJob =>
     HyperLogLogToArrayByteConverter,
     HyperLogLogToByteBufferConverter
   )
-  def KS: String
   def Monoid: HyperLogLogMonoid
 
   def extract(input: DStream[String]): DStream[EventForUnique] =
@@ -40,18 +39,16 @@ trait UniqueJob { self: BaseJob =>
 
   def mergeAndStore(data: DStream[(DateTime, HLL)]): Unit =
     data.foreachRDD { rdd =>
-      rdd.cache()
       val loaded: RDD[(DateTime, HLL)] =
-        rdd.joinWithCassandraTable[(DateTime, HLL)](KS, CF).select(Columns: _*).map {
-          case (_, (time, previous)) => (time, previous)
-        }
+        rdd.joinWithCassandraTable[(DateTime, HLL)](KS, ColumnFamily)
+          .select("time", "counter").map {
+            case (_, (time, oldHLL)) => (time, oldHLL)
+          }
       val output: RDD[(DateTime, HLL)] =
         rdd.leftOuterJoin(loaded).map {
-          case (time, (current, previous)) => (time, previous.fold(current)(_ + current))
+          case (time, (newHLL, oldHLL)) => (time, oldHLL.fold(newHLL)(_ + newHLL))
         }
-      output.saveToCassandra(KS, CF, SomeColumns(Columns: _*))
-
-      rdd.unpersist(blocking = false)
+      output.saveToCassandra(KS, ColumnFamily, SomeColumns("time", "counter"))
     }
 
   def process(data: DStream[String]): DStream[(DateTime, HLL)] = {
