@@ -12,9 +12,8 @@ import scala.concurrent.duration._
 
 object UniqueJobLauncher extends UniqueJob with FolderProducerBaseJob with Launcher {
   override val Bucket: FiniteDuration = 5.minutes
-  override val CF: String = "unique"
-  override val Columns: Seq[SelectableColumnRef] = Seq("time", "counter")
   override val KS: String = "fast"
+  override val ColumnFamily: String = "unique"
   override val Monoid: HyperLogLogMonoid = new HyperLogLogMonoid(12)
 
   override def run(config: Config, ssc: StreamingContext): Unit = {
